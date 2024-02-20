@@ -112,26 +112,23 @@ class ImageNet1kClassification(BaseClassificationDataModule):
 
 class FMoVClassification(BaseClassificationDataModule):
     has_test_data = False
-    cls_num_classes = 26
+    cls_num_classes = 62
 
     def _fix_path(self, path: Path) -> Path:
         stripped = os.sep.join(os.path.normpath(path).split(os.sep)[-6:])
-        return os.path.join(self.data_dir, stipped)
+        return os.path.join(self.data_dir, stripped)
 
     def setup(self, stage: Optional[str] = None) -> None:
-        with open(os.path.join(self.data_dir, 'working/train_struct.json') as f:
+        with open(os.path.join(self.data_dir, 'working/training_struct.json')) as f:
             train_samples = json.load(f)
-        
-        train_files = [self._fix_path(sample['img_path']) for sample in train_samples]
-        train_labels_str = [os.path.normpath(path).split(os.sep)[-3:] for sample in train_samples]
-        classes = {name: idx for idx, name in enumerate(sorted(set(train_labels_str)))}
-        train_labels = [classes[x] for x in train_labels_str]
 
-        with open(os.path.join(self.data_dir, 'working/test_struct.json') as f:
+        train_files = [self._fix_path(sample['img_path']) for sample in train_samples]
+        train_labels = [sample['category'] - 1 for sample in train_samples]
+
+        with open(os.path.join(self.data_dir, 'working/test_struct.json')) as f:
             test_samples = json.load(f)
         test_files = [self._fix_path(sample['img_path']) for sample in test_samples]
-        # TODO: load from groundtruth
-        test_labels = ...
+        test_labels = [sample['category'] - 1 for sample in test_samples]
 
         if stage == 'fit':
             self.train_dataset = ClassificationDataset(file_list=train_files, label_list=train_labels,
