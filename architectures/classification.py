@@ -24,8 +24,11 @@ class ClassificationMae(BaseGlimpseMae):
                                    num_classes=self.num_classes,
                                    average='micro'))
 
+        # self.head = nn.Sequential(
+        #     nn.Linear(1024, self.num_classes),
+        # )
         self.head = nn.Sequential(
-            nn.Linear(1024, self.num_classes),
+            nn.Linear(768, self.num_classes),
         )
 
         self.criterion = nn.CrossEntropyLoss()

@@ -8,7 +8,7 @@ from typing import Any, Dict
 import torch
 
 from architectures.base import BaseArchitecture
-from architectures.mae import mae_vit_large_patch16
+from architectures.mae import mae_vit_large_patch16, mae_vit_base_patch16
 from architectures.retinalize import Retinalizer
 from architectures.utils import dict_to_cpu
 from datasets.base import BaseDataModule
@@ -94,8 +94,7 @@ class BaseGlimpseMae(BaseArchitecture, ABC):
         else:
             raise NotImplemented()
         del checkpoint[prefix + 'pos_embed']
-        del checkpoint[prefix + 'decoder_pos_embed']
-
+        # del checkpoint[prefix + 'decoder_pos_embed']
         if segmentation:
             del checkpoint[prefix + 'decoder_pred.weight']
             del checkpoint[prefix + 'decoder_pred.bias']

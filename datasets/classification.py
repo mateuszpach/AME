@@ -3,6 +3,7 @@ import os
 import sys
 from collections import Counter
 from typing import Optional
+import json
 
 import torch
 from PIL import Image
@@ -114,8 +115,9 @@ class FMoVClassification(BaseClassificationDataModule):
     has_test_data = False
     cls_num_classes = 62
 
-    def _fix_path(self, path: Path) -> Path:
-        stripped = os.sep.join(os.path.normpath(path).split(os.sep)[-6:])
+    def _fix_path(self, path: str) -> str:
+        split = os.path.normpath(path).split(os.sep)
+        stripped = os.sep.join(split[split.index('input'):])
         return os.path.join(self.data_dir, stripped)
 
     def setup(self, stage: Optional[str] = None) -> None:
@@ -128,7 +130,37 @@ class FMoVClassification(BaseClassificationDataModule):
         with open(os.path.join(self.data_dir, 'working/test_struct.json')) as f:
             test_samples = json.load(f)
         test_files = [self._fix_path(sample['img_path']) for sample in test_samples]
-        test_labels = [sample['category'] - 1 for sample in test_samples]
+
+        with open(os.path.join(self.data_dir, 'working/test_gt_mapping.json')) as f:
+            test_gt_mapping = json.load(f)
+
+        caption_to_label = {
+            "airport": 0, "airport_hangar": 1, "airport_terminal": 2, "amusement_park": 3, "aquaculture": 4,
+            "archaeological_site": 5, "barn": 6, "border_checkpoint": 7, "burial_site": 8, "car_dealership": 9,
+            "construction_site": 10, "crop_field": 11, "dam": 12, "debris_or_rubble": 13, "educational_institution": 14,
+            "electric_substation": 15, "factory_or_powerplant": 16, "fire_station": 17, "flooded_road": 18,
+            "fountain": 19, "gas_station": 20, "golf_course": 21, "ground_transportation_station": 22, "helipad": 23,
+            "hospital": 24, "impoverished_settlement": 25, "interchange": 26, "lake_or_pond": 27, "lighthouse": 28,
+            "military_facility": 29, "multi-unit_residential": 30, "nuclear_powerplant": 31, "office_building": 32,
+            "oil_or_gas_facility": 33, "park": 34, "parking_lot_or_garage": 35, "place_of_worship": 36,
+            "police_station": 37, "port": 38, "prison": 39, "race_track": 40, "railway_bridge": 41,
+            "recreational_facility": 42, "road_bridge": 43, "runway": 44, "shipyard": 45, "shopping_mall": 46,
+            "single-unit_residential": 47, "smokestack": 48, "solar_farm": 49, "space_facility": 50, "stadium": 51,
+            "storage_tank": 52, "surface_mine": 53, "swimming_pool": 54, "toll_booth": 55, "tower": 56,
+            "tunnel_opening": 57, "waste_disposal": 58, "water_treatment_facility": 59, "wind_farm": 60, "zoo": 61}
+
+        id_to_caption = {}
+        for mapping in test_gt_mapping:
+            for box_mapping in mapping['box_mapping']:
+                id_to_caption[mapping['output'][5:] + '/' + str(box_mapping['output'])] = box_mapping['label']
+
+        test_labels = []
+        for sample in test_samples:
+            id = os.sep.join(os.path.normpath(sample['img_path']).split(os.sep)[-3:-1])
+            caption = id_to_caption[id]
+            if caption != 'false_detection':
+                label = caption_to_label[caption]
+                test_labels.append(label)
 
         if stage == 'fit':
             self.train_dataset = ClassificationDataset(file_list=train_files, label_list=train_labels,
