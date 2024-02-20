@@ -21,7 +21,8 @@ class BaseGlimpseMae(BaseArchitecture, ABC):
     def __init__(self, args: Any, datamodule: BaseDataModule, out_chans=3):
         super().__init__(args, datamodule)
 
-        self.mae = mae_vit_large_patch16(img_size=datamodule.image_size, out_chans=out_chans)
+        # self.mae = mae_vit_large_patch16(img_size=datamodule.image_size, out_chans=out_chans)
+        self.mae = mae_vit_base_patch16(img_size=datamodule.image_size, out_chans=out_chans)
 
         self.num_glimpses = args.num_glimpses
         self.masked_loss = args.masked_loss
