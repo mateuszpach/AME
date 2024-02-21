@@ -161,6 +161,11 @@ class FMoVClassification(BaseClassificationDataModule):
             if caption != 'false_detection':
                 label = caption_to_label[caption]
                 test_labels.append(label)
+            else:
+                test_labels.append(None)
+
+        test_files = [file for file, label in zip(test_files, test_labels) if label is not None]
+        test_labels = [label for label in test_labels if label is not None]
 
         if stage == 'fit':
             self.train_dataset = ClassificationDataset(file_list=train_files, label_list=train_labels,
